@@ -11,14 +11,14 @@ api_key_env = os.getenv("GEMINI_API_KEY")
 # --- 2. CONFIGURACIÓN DE PÁGINA Y ESTILOS ---
 st.set_page_config(page_title="Emochi Character Dashboard", page_icon="🤖", layout="wide")
 
+# --- ESTILOS PERSONALIZADOS ---
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
-    .stButton>button { width: 100%; background-color: #ffaa00; color: black; font-weight: bold; border-radius: 8px; }
-    .stButton>button:hover { background-color: #e69900; color: white; }
-    .stat-box { background-color: #161b22; padding: 15px; border-radius: 10px; border-left: 5px solid #ffaa00; }
+    .stTextInput, .stTextArea { background-color: #161b22 !important; }
+    .character-stat { font-size: 14px; font-weight: bold; color: #ffaa00; }
     </style>
-    """, unsafe_allow_index=True)
+    """, unsafe_allow_html=True)  # <-- CAMBIA 'index' POR 'html' AQUÍ
 
 # --- 3. INICIALIZACIÓN DEL ESTADO (PERSISTENCIA) ---
 if "personaje" not in st.session_state:
