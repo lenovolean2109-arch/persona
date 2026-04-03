@@ -75,7 +75,7 @@ with st.sidebar:
     else:
         st.error("❌ Falta API Key")
 
-col_in, col_out = st.columns()
+col_in, col_out = st.columns(2)
 
 with col_in:
     st.subheader("🛠 Parámetros")
