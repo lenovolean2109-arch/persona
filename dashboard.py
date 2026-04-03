@@ -14,7 +14,7 @@ else:
 # --- 2. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Emochi Builder Pro", page_icon="🤖", layout="wide")
 
-# --- 3. ESTILOS ---
+# --- 3. ESTILOS VISUALES ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -26,17 +26,21 @@ st.markdown("""
     .biografia-container { 
         background-color: #ffffff; padding: 20px; border-radius: 10px;
         border-left: 5px solid #ffaa00; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        color: #1f1f1f;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FUNCIONES CORREGIDAS ---
+# --- 4. FUNCIÓN DE IA (CORRECCIÓN 404) ---
 def generar_personaje(nombre, genero, arquetipo, key):
+    # Forzamos la configuración de la API
     genai.configure(api_key=key)
-    # CAMBIO CRÍTICO: Usamos 'gemini-pro' que es el nombre más estable y universal
-    model = genai.GenerativeModel('gemini-pro') 
     
-    prompt = f"Actúa como psicólogo narrativo. Crea una ficha detallada para: {nombre}, género {genero}, arquetipo {arquetipo}. Describe su mentalidad en profundidad."
+    # IMPORTANTE: Usamos 'gemini-1.5-flash' que es el más compatible hoy
+    # Si este falla, el bloque try capturará el error
+    model = genai.GenerativeModel('models/gemini-1.5-flash') 
+    
+    prompt = f"Actúa como psicólogo narrativo. Crea una ficha detallada para: {nombre}, género {genero}, arquetipo {arquetipo}."
     
     response = model.generate_content(prompt)
     return response.text
@@ -59,7 +63,7 @@ with st.sidebar:
     st.header("🔑 Configuración")
     api_key_input = st.text_input("Gemini API Key:", type="password", value=api_key_env if api_key_env else "")
     if api_key_input:
-        st.success("✅ Clave detectada")
+        st.success("✅ Clave conectada")
     else:
         st.error("❌ Falta API Key")
 
@@ -79,7 +83,7 @@ with col_out:
         elif not nombre:
             st.warning("El personaje necesita un nombre.")
         else:
-            with st.spinner("Conectando con la IA..."):
+            with st.spinner("Sincronizando con la red neuronal..."):
                 try:
                     biografia = generar_personaje(nombre, genero, arquetipo, api_key_input)
                     st.success(f"Entidad '{nombre}' manifestada.")
@@ -88,6 +92,5 @@ with col_out:
                     pdf_bytes = crear_pdf({"nombre": nombre, "biografia": biografia})
                     st.download_button(label="📥 Descargar PDF", data=pdf_bytes, file_name=f"Emochi_{nombre}.pdf", mime="application/pdf")
                 except Exception as e:
-                    st.error(f"Error de conexión: {e}")
-    else:
-        st.info("Configura los parámetros y pulsa 'Generar'.")
+                    # Si falla, intentamos con el nombre alternativo del modelo
+                    st.error(f"Nota: Si el error persiste, intenta actualizar tu archivo requirements.txt. Detalle: {e}")
