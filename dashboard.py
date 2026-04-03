@@ -74,7 +74,7 @@ with st.sidebar:
     st.caption("v2.5 - Sincronización de Secrets Activa")
 
 # Layout de columnas
-col_in, col_out = st.columns()
+col_in, col_out = st.columns(2)
 
 with col_in:
     st.subheader("🛠 Parámetros")
