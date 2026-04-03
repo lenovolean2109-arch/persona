@@ -6,8 +6,6 @@ from dotenv import load_dotenv
 
 # --- 1. CONFIGURACIÓN DE SEGURIDAD ---
 load_dotenv()
-
-# Intentamos obtener la clave desde Secrets (nube) o .env (local)
 if "GEMINI_API_KEY" in st.secrets:
     api_key_env = st.secrets["GEMINI_API_KEY"]
 else:
@@ -16,7 +14,7 @@ else:
 # --- 2. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Emochi Builder Pro", page_icon="🤖", layout="wide")
 
-# --- 3. ESTILOS (CORREGIDOS) ---
+# --- 3. ESTILOS ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -32,11 +30,11 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FUNCIONES (ACTUALIZADAS PARA EVITAR ERROR 404) ---
+# --- 4. FUNCIONES CORREGIDAS ---
 def generar_personaje(nombre, genero, arquetipo, key):
     genai.configure(api_key=key)
-    # Usamos el nombre de modelo más estándar y estable
-    model = genai.GenerativeModel('gemini-1.5-flash-latest') 
+    # CAMBIO CRÍTICO: Usamos 'gemini-pro' que es el nombre más estable y universal
+    model = genai.GenerativeModel('gemini-pro') 
     
     prompt = f"Actúa como psicólogo narrativo. Crea una ficha detallada para: {nombre}, género {genero}, arquetipo {arquetipo}. Describe su mentalidad en profundidad."
     
@@ -59,41 +57,37 @@ st.title("🤖 Emochi: Character Builder")
 
 with st.sidebar:
     st.header("🔑 Configuración")
-    api_key_input = st.text_input("Gemini API Key:", type="password", 
-                                  value=api_key_env if api_key_env else "")
+    api_key_input = st.text_input("Gemini API Key:", type="password", value=api_key_env if api_key_env else "")
     if api_key_input:
-        st.success("✅ Clave lista")
+        st.success("✅ Clave detectada")
     else:
         st.error("❌ Falta API Key")
 
-col_in, col_out = st.columns(2)
+col_in, col_out = st.columns()
 
 with col_in:
-    st.subheader("🛠 Parámetros")
+    st.subheader("🛠️ Parámetros")
     nombre = st.text_input("Nombre del Personaje:")
     genero = st.selectbox("Género:", ["Andrógino", "Masculino", "Femenino", "Fluido", "No binario"])
     arquetipo = st.text_area("Arquetipo / Esencia:", "Ancla")
-    
     boton = st.button("🚀 Generar Entidad")
 
 with col_out:
     if boton:
         if not api_key_input:
-            st.error("Error: Introduce una clave válida.")
+            st.error("Error: Revisa la API Key en la barra lateral.")
         elif not nombre:
             st.warning("El personaje necesita un nombre.")
         else:
-            with st.spinner("Conectando con la consciencia artificial..."):
+            with st.spinner("Conectando con la IA..."):
                 try:
                     biografia = generar_personaje(nombre, genero, arquetipo, api_key_input)
                     st.success(f"Entidad '{nombre}' manifestada.")
                     st.markdown(f'<div class="biografia-container">{biografia}</div>', unsafe_allow_html=True)
                     
                     pdf_bytes = crear_pdf({"nombre": nombre, "biografia": biografia})
-                    st.download_button(label="📥 Descargar PDF", data=pdf_bytes, 
-                                       file_name=f"Emochi_{nombre}.pdf", mime="application/pdf")
+                    st.download_button(label="📥 Descargar PDF", data=pdf_bytes, file_name=f"Emochi_{nombre}.pdf", mime="application/pdf")
                 except Exception as e:
-                    # Si el error 404 persiste, intentamos con el nombre corto del modelo
                     st.error(f"Error de conexión: {e}")
     else:
         st.info("Configura los parámetros y pulsa 'Generar'.")
