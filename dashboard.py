@@ -31,14 +31,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FUNCIÓN DE IA (CORRECCIÓN 404) ---
+# --- 4. FUNCIÓN DE IA (CORRECCIÓN DEFINITIVA 404) ---
 def generar_personaje(nombre, genero, arquetipo, key):
-    # Forzamos la configuración de la API
     genai.configure(api_key=key)
     
-    # IMPORTANTE: Usamos 'gemini-1.5-flash' que es el más compatible hoy
-    # Si este falla, el bloque try capturará el error
-    model = genai.GenerativeModel('models/gemini-1.5-flash') 
+    # Usamos el nombre del modelo sin el prefijo 'models/' para máxima compatibilidad
+    model = genai.GenerativeModel('gemini-1.5-flash') 
     
     prompt = f"Actúa como psicólogo narrativo. Crea una ficha detallada para: {nombre}, género {genero}, arquetipo {arquetipo}."
     
@@ -63,7 +61,7 @@ with st.sidebar:
     st.header("🔑 Configuración")
     api_key_input = st.text_input("Gemini API Key:", type="password", value=api_key_env if api_key_env else "")
     if api_key_input:
-        st.success("✅ Clave conectada")
+        st.success("✅ Clave detectada")
     else:
         st.error("❌ Falta API Key")
 
@@ -92,5 +90,6 @@ with col_out:
                     pdf_bytes = crear_pdf({"nombre": nombre, "biografia": biografia})
                     st.download_button(label="📥 Descargar PDF", data=pdf_bytes, file_name=f"Emochi_{nombre}.pdf", mime="application/pdf")
                 except Exception as e:
-                    # Si falla, intentamos con el nombre alternativo del modelo
-                    st.error(f"Nota: Si el error persiste, intenta actualizar tu archivo requirements.txt. Detalle: {e}")
+                    st.error(f"Error técnico: {e}")
+    else:
+        st.info("Configura los parámetros y pulsa 'Generar'.")
