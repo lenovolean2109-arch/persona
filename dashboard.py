@@ -1,15 +1,16 @@
 import streamlit as st
-import google.generativeai as genai
+from openai import OpenAI
 from fpdf import FPDF
 import os
 from dotenv import load_dotenv
 
 # --- 1. CONFIGURACIÓN DE SEGURIDAD ---
 load_dotenv()
-if "GEMINI_API_KEY" in st.secrets:
-    api_key_env = st.secrets["GEMINI_API_KEY"]
+# Prioridad: 1. Secrets de Streamlit, 2. Archivo .env
+if "OPENAI_API_KEY" in st.secrets:
+    api_key_env = st.secrets["OPENAI_API_KEY"]
 else:
-    api_key_env = os.getenv("GEMINI_API_KEY")
+    api_key_env = os.getenv("OPENAI_API_KEY")
 
 # --- 2. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Emochi Builder Pro", page_icon="🤖", layout="wide")
@@ -19,29 +20,29 @@ st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
     .stButton>button { 
-        width: 100%; background-color: #ffaa00; color: white; 
+        width: 100%; background-color: #00A67E; color: white; 
         font-weight: bold; border-radius: 10px; border: none; height: 3em;
     }
-    .stButton>button:hover { background-color: #e69900; }
+    .stButton>button:hover { background-color: #008f6c; }
     .biografia-container { 
         background-color: #ffffff; padding: 20px; border-radius: 10px;
-        border-left: 5px solid #ffaa00; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border-left: 5px solid #00A67E; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         color: #1f1f1f;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FUNCIÓN DE IA (CORRECCIÓN DEFINITIVA 404) ---
+# --- 4. FUNCIÓN DE IA (AHORA CON CHATGPT) ---
 def generar_personaje(nombre, genero, arquetipo, key):
-    genai.configure(api_key=key)
-    
-    # Usamos el nombre del modelo sin el prefijo 'models/' para máxima compatibilidad
-    model = genai.GenerativeModel('gemini-1.5-flash') 
+    client = OpenAI(api_key=key)
     
     prompt = f"Actúa como psicólogo narrativo. Crea una ficha detallada para: {nombre}, género {genero}, arquetipo {arquetipo}."
     
-    response = model.generate_content(prompt)
-    return response.text
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo", # O usa "gpt-4" si tienes acceso
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices.message.content
 
 def crear_pdf(datos):
     pdf = FPDF()
@@ -55,17 +56,17 @@ def crear_pdf(datos):
     return pdf.output(dest='S')
 
 # --- 5. INTERFAZ ---
-st.title("🤖 Emochi: Character Builder")
+st.title("🤖 Emochi: Character Builder (ChatGPT Version)")
 
 with st.sidebar:
     st.header("🔑 Configuración")
-    api_key_input = st.text_input("Gemini API Key:", type="password", value=api_key_env if api_key_env else "")
+    api_key_input = st.text_input("OpenAI API Key:", type="password", value=api_key_env if api_key_env else "")
     if api_key_input:
         st.success("✅ Clave detectada")
     else:
         st.error("❌ Falta API Key")
 
-col_in, col_out = st.columns(2)
+col_in, col_out = st.columns()
 
 with col_in:
     st.subheader("🛠️ Parámetros")
@@ -81,7 +82,7 @@ with col_out:
         elif not nombre:
             st.warning("El personaje necesita un nombre.")
         else:
-            with st.spinner("Sincronizando con la red neuronal..."):
+            with st.spinner("Consultando con la mente de ChatGPT..."):
                 try:
                     biografia = generar_personaje(nombre, genero, arquetipo, api_key_input)
                     st.success(f"Entidad '{nombre}' manifestada.")
@@ -90,6 +91,6 @@ with col_out:
                     pdf_bytes = crear_pdf({"nombre": nombre, "biografia": biografia})
                     st.download_button(label="📥 Descargar PDF", data=pdf_bytes, file_name=f"Emochi_{nombre}.pdf", mime="application/pdf")
                 except Exception as e:
-                    st.error(f"Error técnico: {e}")
+                    st.error(f"Error técnico con OpenAI: {e}")
     else:
         st.info("Configura los parámetros y pulsa 'Generar'.")
