@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 # --- 1. CONFIGURACIÓN DE SEGURIDAD ---
 load_dotenv()
-# Prioridad: Secrets de Streamlit > variable de entorno .env
+# Prioridad: Secrets de Streamlit (Nube) > Archivo .env (Local)
 api_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
 
 # --- 2. CONFIGURACIÓN DE PÁGINA ---
@@ -28,9 +28,9 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. LÓGICA DE IA (NUEVO SDK) ---
+# --- 4. LÓGICA DE IA (NUEVO SDK v1) ---
 def generar_personaje(nombre, genero, arquetipo, key):
-    # Inicialización del cliente con el nuevo SDK de Google
+    # Inicialización con el nuevo cliente para evitar errores 404 de versión
     client = genai.Client(api_key=key)
     
     prompt = f"""
@@ -45,7 +45,7 @@ def generar_personaje(nombre, genero, arquetipo, key):
     5. Prompt Visual: Sin límite, detallado, estilo 3D Octane Render, 8k.
     """
     
-    # Uso de gemini-1.5-flash para máxima estabilidad y evitar errores 404
+    # Modelo 1.5 Flash: el más estable para evitar 404 y RESOURCE_EXHAUSTED
     response = client.models.generate_content(
         model="gemini-1.5-flash", 
         contents=prompt
@@ -59,6 +59,7 @@ def crear_pdf(datos):
     pdf.cell(200, 10, txt=f"FICHA EMOCHI: {datos['nombre']}", ln=True, align='C')
     pdf.ln(10)
     pdf.set_font("Arial", size=11)
+    # Reemplazo de caracteres para compatibilidad con PDF
     texto_limpio = datos['biografia'].encode('latin-1', 'replace').decode('latin-1')
     pdf.multi_cell(0, 7, txt=texto_limpio)
     return pdf.output(dest='S')
@@ -68,16 +69,18 @@ st.title("🤖 Emochi: Character Builder")
 
 with st.sidebar:
     st.header("🔑 Configuración")
-    api_key_input = st.text_input("Gemini API Key:", type="password", value=api_key if api_key else "")
+    # Entrada de clave con valor por defecto del entorno
+    api_key_input = st.text_input("Gemini API Key:", type="password", 
+                                  value=api_key if api_key else "")
     
     if api_key_input:
-        st.success("✅ Clave cargada")
+        st.success("✅ Clave lista")
     else:
         st.error("❌ Falta API Key")
 
-col_in, col_out = st.columns(2)
+col_params, col_display = st.columns(2)
 
-with col_in:
+with col_params:
     st.subheader("🛠 Parámetros")
     nombre = st.text_input("Nombre del Personaje:")
     genero = st.selectbox("Género:", ["Andrógino", "Masculino", "Femenino", "Fluido", "No binario"])
@@ -85,13 +88,13 @@ with col_in:
     
     boton_generar = st.button("🚀 Generar Entidad")
 
-with col_out:
+with col_display:
     # --- LÓGICA DE GENERACIÓN ---
     if boton_generar:
         if not api_key_input:
             st.error("Por favor, introduce una API Key válida.")
         elif not nombre:
-            st.warning("⚠️ El personaje necesita un nombre.")
+            st.warning("El personaje necesita un nombre.")
         else:
             with st.spinner("Esculpiendo la psique del personaje..."):
                 try:
@@ -103,7 +106,6 @@ with col_out:
                     pdf_bytes = crear_pdf({"nombre": nombre, "biografia": resultado})
                     st.download_button("📥 Descargar PDF", pdf_bytes, f"Emochi_{nombre}.pdf", "application/pdf")
                 except Exception as e:
-                    # Captura de errores de cuota y conexión
                     st.error(f"Error técnico detectado: {e}")
     else:
         st.info("Configura los parámetros y pulsa 'Generar'.")
