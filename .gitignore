@@ -1,0 +1,26 @@
+# --- SEGURIDAD ---
+# Archivo de variables de entorno (NUNCA SUBIR ESTO)
+.env
+secrets.toml
+
+# --- PYTHON ---
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- ENTORNOS VIRTUALES ---
+# Si creaste un entorno virtual (venv), esto evita subir gigas de basura
+venv/
+env/
+ENV/
+.venv/
+
+# --- STREAMLIT ---
+# Carpetas de configuración local de Streamlit
+.streamlit/ config.toml
+
+# --- SISTEMA ---
+# Archivos basura de Windows o Mac
+Thumbs.db
+.DS_Store
